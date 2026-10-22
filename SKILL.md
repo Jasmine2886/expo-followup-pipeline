@@ -2,7 +2,7 @@
 name: expo-followup-pipeline
 version: 1.0.0
 agent_created: true
-description: 展会 / 差旅归来后的线索回收与跟进落地——多源素材回收（展会 App 聊天记录、AI 语音纪要、邮箱、日历、台账）→ 结构化成跟进待办表 → 落地到飞书任务 + 日历提醒 + 台账回填。当用户说「出差回来了整理一下跟进」「把展会上聊的整理成待办」「展会复盘」「follow-up table」「会后 Action Points」「把会议纪要做成任务」时使用。触发词：展会复盘、出差归来、跟进表、跟进待办、Action Points、线索回收、会议纪要整理。
+description: 展会 / 差旅归来后的线索回收与跟进落地——多源素材回收（展会 App 聊天记录、AI 语音纪要、邮箱、日历、台账）→ 结构化成跟进待办表 → 落地到飞书任务 + 日历提醒 + 台账回填。当用户说「出差回来了整理一下跟进」「把展会上聊的整理成待办」「展会复盘」「follow-up table」「会后 Action Points」「把会议纪要做成任务」时使用。触发词：展会复盘、出差归来、跟进表、跟进待办、Action Points、线索回收、会议纪要整理。English: Post-event / post-trip lead recovery and follow-up pipeline — collect from multiple sources (event app chats, AI voice notes, email, calendar, deal ledger) → structure into a follow-up action table → land into Lark tasks + calendar reminders + ledger write-back. Use when the user says "just got back from a trip, organize the follow-ups", "turn what I discussed at the expo into todos", "expo debrief", "follow-up table", "post-meeting action points", "turn meeting notes into tasks". Triggers: expo debrief, trade show recap, business trip return, follow-up table, follow-up todos, action points, lead recovery, meeting notes to tasks.
 ---
 
 # 展会 / 差旅归来 · 线索回收与跟进落地
