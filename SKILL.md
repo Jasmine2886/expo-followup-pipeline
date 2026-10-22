@@ -1,8 +1,6 @@
 ---
 name: expo-followup-pipeline
-version: 2.0.0
-agent_created: true
-description: "Turn a conference, trade show, or business trip into a tracked follow-up pipeline. Collects scattered lead evidence from five sources (trip calendar, AI voice transcripts, event app messages, email, CRM/ledger) → reconciles what actually happened against what was planned → structures it into a prioritized follow-up table → lands it into real tasks + calendar reminders + CRM write-back. Use when the user says: 'just got back from a trip, organize the follow-ups', 'turn what I discussed at the expo into todos', 'expo debrief', 'conference recap', 'follow-up table', 'post-meeting action points', 'turn meeting notes into tasks', 'who should I chase this week'. Also triggers on: 展会复盘、出差归来、跟进表、跟进待办、Action Points、线索回收、会议纪要整理. NOT for: pre-event outreach scheduling, or drafting a single email."
+description: "Turn a conference, trade show, or business trip into a tracked follow-up pipeline. Collects scattered lead evidence from five sources (trip calendar, AI voice transcripts, event app messages, email, CRM/ledger) → reconciles what actually happened against what was planned → structures it into a prioritized follow-up table → lands it into real tasks + calendar reminders + CRM write-back. Use when the user says: 'just got back from a trip, organize the follow-ups', 'turn what I discussed at the expo into todos', 'expo debrief', 'conference recap', 'follow-up table', 'post-meeting action points', 'turn meeting notes into tasks', 'who should I chase this week'. NOT for: pre-event outreach scheduling, or drafting a single email."
 ---
 
 # Post-Event Lead Recovery & Follow-Up Pipeline
@@ -22,7 +20,7 @@ This skill contains **no machine-specific absolute paths**. Everything environme
 | --- | --- | --- |
 | `WORKSPACE_ROOT` | Workspace root (base for all relative paths) | e.g. `./` |
 | `OUTPUT_DIR` | Output directory | `<WORKSPACE_ROOT>/output/<project>/` |
-| `MEMORY_DIR` | Work-log directory | `<WORKSPACE_ROOT>/.workbuddy/memory/` (create if missing) |
+| `MEMORY_DIR` | Work-log directory | `<WORKSPACE_ROOT>/.agent/memory/` or your agent's log folder (create if missing) |
 | `LEDGER_DOC` | Your deal ledger / CRM / spreadsheet identifier | Any system: a doc ID, a Notion database, a Google Sheet, an Airtable base. Must expose two fields per contact: *on-site notes* and *post-meeting action points* |
 | `CALENDAR_ID` | Target calendar | Default `primary` — write to the **personal default calendar**, never create a dedicated one |
 | `MAIL_USER` | Email account | Used for event-app login codes and searching meeting mail |
@@ -91,7 +89,7 @@ Requirements:
 ### Step 5 · Land calendar reminders (not meetings)
 
 ```
-<CAL_CLI> calendar-create --summary "🔔 Follow up: <Company> · <action>" --start "..." --end "..." --description @<file>
+<CAL_CLI> calendar-create --summary "Follow up: <Company> · <action>" --start "..." --end "..." --description @<file>
 ```
 
 - Reminder events have **zero attendees** — hard rule, never invite anyone, including the counterparty
@@ -139,7 +137,7 @@ JSON.stringify(Array.from(document.querySelectorAll('a[href]'))
 5. Open each permalink and read the body: `document.querySelector('main').innerText`
    - The leading block is the conversation list; **content starts at the first "Month D, YYYY" line** and ends at `Scroll to bottom`
 6. Timestamps render in the **browser's local timezone** → convert to `TZ_BASE` and note the conversion in the output
-7. Append the raw chat + a summary into the **notes field of the matching calendar event** (`calendar-update --description @file`), under a heading like "💬 In-app conversation log"
+7. Append the raw chat + a summary into the **notes field of the matching calendar event** (via your calendar tool's update command, e.g. `calendar-update --description @file`), under a heading like "In-app conversation log"
 8. Conversations with no matching calendar event are new leads — list them separately, don't drop them
 
 ---

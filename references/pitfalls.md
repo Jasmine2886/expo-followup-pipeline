@@ -5,7 +5,7 @@
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | User is logged into their own Chrome, automation browser still shows logged out | Automation browser uses an **isolated profile**; no cookie sharing | Complete login inside the automation session, or fall back to pasted content |
-| Third-party one-tap SSO (WeChat / Apple / Google) lands on someone else's account | That identity is bound to a different account in the system | Use phone-code or username/password instead; verify account ownership first |
+| Third-party one-tap SSO (Google / Apple / Microsoft / social) lands on someone else's account | That identity is bound to a different account in the system | Use phone-code or username/password instead; verify account ownership first |
 | Image captcha blocks even in headless mode | Risk control doesn't distinguish headless | Screenshot → interpret → fill → submit. Wrong answers rotate the image; cap at 3 rounds |
 | Sandbox `screencapture` reports "could not create image from display" | No screen-recording permission | Can't confirm the window is visible → **ask the user**, don't guess |
 | Window opened but URL stays `about:blank` | Navigation lost after session restart | Navigate once more, then read the URL |
@@ -17,7 +17,7 @@
   - dpr=1 and screenshot size == viewport size → `getBoundingClientRect()` maps **1:1** to screenshot pixels
 - For "click the smallest blue cone"-style captchas: `eval` the captcha image's `getBoundingClientRect()` first, then convert by relative position inside the image
 - **Never click based on how a scaled-down preview looks.** Images get shrunk when displayed in chat — clicking where it visually appears will always be off
-- `sips --cropOffset` semantics are unintuitive; crop position needs one trial run to confirm. When unsure, screenshot the full image
+- `sips --cropOffset` (macOS) semantics are unintuitive; crop position needs one trial run to confirm. When unsure, screenshot the full image. On Linux/Windows use your OS's equivalent (ImageMagick `convert`/`magick`, PowerShell, etc.)
 
 ## Time and timezone
 

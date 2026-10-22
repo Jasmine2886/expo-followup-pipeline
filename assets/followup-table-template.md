@@ -36,7 +36,7 @@
 
 | Company / Contact | Why we missed | How to reach them | Worth chasing? |
 |---|---|---|---|
-|  | Invite expired / last-minute request unanswered / couldn't find their booth | LinkedIn / email / WhatsApp | Yes · No |
+|  | Invite expired / last-minute request unanswered / couldn't find their booth | LinkedIn / email / chat | Yes · No |
 
 ---
 
@@ -57,6 +57,6 @@
 
 ## Appendix: copy-pasteable action lines
 
-> One per line, ready to drop into WhatsApp / email / your task tool
+> One per line, ready to drop into chat / email / your task tool
 
 1.

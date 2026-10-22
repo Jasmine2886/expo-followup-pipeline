@@ -2,7 +2,7 @@
 
 ## Source 1: Calendar covering the trip (highest priority)
 
-Why it ranks first: meetings marked "confirmed" in the pre-trip plan often never happen, and unplanned ones do. Short events the user typed into their phone on site ("Nsano meeting", "dinner w/ X") *are* the real meeting list.
+Why it ranks first: meetings marked "confirmed" in the pre-trip plan often never happen, and unplanned ones do. Short events the user typed into their phone on site ("Acme demo", "dinner w/ distributor") *are* the real meeting list.
 
 How:
 ```
