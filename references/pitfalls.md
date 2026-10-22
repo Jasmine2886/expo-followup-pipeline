@@ -1,44 +1,44 @@
-# 坑位速查（浏览器 / 登录 / 验证码 / 坐标 / 工具）
+# Gotcha quick-reference — browser / login / captcha / coordinates / tooling
 
-## 浏览器与登录
+## Browser and login
 
-| 现象 | 原因 | 解法 |
+| Symptom | Cause | Fix |
 | --- | --- | --- |
-| 用户在自己 Chrome 登录了，自动化浏览器仍是未登录 | 自动化浏览器用**独立档案**，与用户日常浏览器不共享 Cookie | 必须在自动化会话内完成登录；或让用户粘贴内容（保底） |
-| 第三方一键登录（微信/Apple）登进去是别人的账号 | 该身份在系统里绑到别的账号 | 改用手机号验证码 / 账号密码；先确认账号归属 |
-| 无头模式也被图形验证码拦 | 风控不区分无头 | 截图 → 判读 → 填答案 → 提交；判错会换图，最多 3 轮 |
-| 沙箱内 `screencapture` 报 "could not create image from display" | 无屏幕录制权限 | 无法确认窗口是否可见 → **直接问用户**，别猜 |
-| 弹了窗口但 URL 一直是 about:blank | 重启会话后导航丢失 | 重新导航一次再读 URL |
-| 钥匙串读取被拒（如读浏览器加密 Cookie） | 系统权限 | 放弃这条路，走官方登录（邮箱/手机验证码）更快 |
+| User is logged into their own Chrome, automation browser still shows logged out | Automation browser uses an **isolated profile**; no cookie sharing | Complete login inside the automation session, or fall back to pasted content |
+| Third-party one-tap SSO (WeChat / Apple / Google) lands on someone else's account | That identity is bound to a different account in the system | Use phone-code or username/password instead; verify account ownership first |
+| Image captcha blocks even in headless mode | Risk control doesn't distinguish headless | Screenshot → interpret → fill → submit. Wrong answers rotate the image; cap at 3 rounds |
+| Sandbox `screencapture` reports "could not create image from display" | No screen-recording permission | Can't confirm the window is visible → **ask the user**, don't guess |
+| Window opened but URL stays `about:blank` | Navigation lost after session restart | Navigate once more, then read the URL |
+| Keychain read denied (e.g. reading encrypted browser cookies) | OS permission | Abandon that route; official login (email/phone code) is faster |
 
-## 坐标与点击
+## Coordinates and clicking
 
-- 先确认坐标空间：`window.devicePixelRatio` 与截图尺寸
-  - dpr=1 且截图尺寸 == 视口尺寸 → `getBoundingClientRect()` 与截图像素 **1:1**
-- 点选类验证码（"点最小的蓝色三角锥"）：先 `eval` 拿到验证码图的 `getBoundingClientRect()`，再按图内相对位置换算坐标
-- **不要凭缩放后的视觉估计点击**——图片在对话里显示时被缩小过，直接按看到的位置点必然偏
-- `sips --cropOffset` 的语义不直观，裁剪位置需要试一次看结果；拿不准就先截整图
+- Confirm the coordinate space first: check `window.devicePixelRatio` and screenshot dimensions
+  - dpr=1 and screenshot size == viewport size → `getBoundingClientRect()` maps **1:1** to screenshot pixels
+- For "click the smallest blue cone"-style captchas: `eval` the captcha image's `getBoundingClientRect()` first, then convert by relative position inside the image
+- **Never click based on how a scaled-down preview looks.** Images get shrunk when displayed in chat — clicking where it visually appears will always be off
+- `sips --cropOffset` semantics are unintuitive; crop position needs one trial run to confirm. When unsure, screenshot the full image
 
-## 时间与时区
+## Time and timezone
 
-- 展会 App / 网页时间戳常按**浏览器本地时区**渲染，不是展会当地时区
-- 统一换算到 `TZ_BASE` 并在产出里注明换算关系（如"当地 = 基准 −4h"）
-- 判定歧义（"10:30 a.m." 是哪个时区）时，用邮件附件/邀请里的原始 UTC 时间反推，不要猜
+- Event app / web timestamps usually render in the **browser's local timezone**, not the event's local timezone
+- Convert everything to `TZ_BASE` and state the relationship in the output (e.g. "local = base −4h")
+- When a time is ambiguous ("10:30 a.m." — which zone?), derive it from the UTC timestamp in the email attachment or invite. Don't guess
 
-## 飞书 CLI（TODOOL = lark-cli 时的已知坑）
+## Task & calendar CLI (when `TODOOL` is a CLI — known traps)
 
-| 坑 | 说明 |
+| Trap | Detail |
 | --- | --- |
-| `calendar +create` 带通知参数 | 不支持，会整条静默失败；通知参数属 `+update` |
-| 批量建事件后不复核 | 失败可能返回得像成功 → 必须 `calendar +agenda` 复核 |
-| 删除事件不带确认参数 | 返回 ok 但没删 |
-| `+update` 改时间只给一端 | 校验报错，起止必须同时给 |
-| 文档整块替换 | 块 ID 会变，复用旧 ID 必失败 → 纯文字改动用 `str_replace` |
-| `--scope keyword` 定位表格 | 不可靠（可能命中另一张表）→ 用已知块 ID 或按内容过滤 |
-| 输出 `| head` 截断后判成功 | 会把版本提示当成功信号 → 落盘再解析 |
+| Passing notification/reminder params to `calendar-create` | Usually unsupported; the whole call fails silently. Those params belong to **update** |
+| Not verifying after batch event creation | Failures can return something that looks like success → always read the agenda back |
+| Deleting an event without the confirm flag | Returns ok, deletes nothing |
+| Updating a time with only one endpoint given | Validation error — start and end must both be supplied |
+| Whole-block document replacement | Block IDs change; reusing an old ID always fails → use targeted string replace for text edits |
+| Locating a table by keyword scope | Unreliable (may hit a different table) → use a known block ID or filter by content |
+| Judging success from `\| head`-truncated output | Version banners get mistaken for success → write to disk, then parse |
 
-## 通用
+## General
 
-- 命令输出一律**落盘再解析**，别靠管道截断后的片段下结论
-- 登录类操作尝试超过 3 轮未成 → 立刻切换保底路径（让用户粘贴/人工介入），不要死磕
-- 写文档时 `&ldquo;` 之类实体会被转成字面量 → 中文引号直接用「」
+- Always **write command output to disk, then parse it.** Never decide from a truncated pipe fragment
+- More than 3 failed login rounds → switch to the fallback path (user pastes content / human steps in). Don't grind
+- When writing documents, HTML entities like `&ldquo;` get turned into literal text → use typographic quote characters directly

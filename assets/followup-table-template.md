@@ -1,62 +1,62 @@
-# <展会/差旅名> 会后跟进表
+# <Event / Trip Name> — Follow-Up Table
 
-> 生成时间：YYYY-MM-DD（基准时区 <TZ_BASE>；当地时区 <TZ_LOCAL>，当地 = 基准 <±Nh>）
-> 素材来源：出差日历 / 语音纪要 / 展会 App Messages / 邮箱 / 台账
-> 用法：按「截止」从上往下做；做完一条划掉一条。状态栏 ⬜ 未开始 · 🔄 进行中 · ✅ 完成 · ⌛ 已过期
+> Generated: YYYY-MM-DD (base timezone `<TZ_BASE>`; event timezone `<TZ_LOCAL>`, local = base <±Nh>)
+> Sources: trip calendar / voice transcripts / event app messages / email / CRM ledger
+> How to use: work top-down by **due date**; strike one off when done. Status: ⬜ not started · 🔄 in progress · ✅ done · ⌛ overdue
 
 ---
 
-## 一、本周必做（截止 ≤ 7 天）
+## 1. This week (due ≤ 7 days)
 
-| 截止 | 状态 | 公司 | 对接人 / 职务 | 要做的动作（动词开头） | 背景（聊了什么 / 对方给了什么） | 优先级 |
+| Due | Status | Company | Contact / Role | Action (verb-first) | Context (what we discussed / they gave us) | Priority |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | ⬜ |  |  |  |  | P1 |
 
-## 二、两周内（截止 8–14 天）
+## 2. Within two weeks (due 8–14 days)
 
-| 截止 | 状态 | 公司 | 对接人 / 职务 | 要做的动作 | 背景 | 优先级 |
+| Due | Status | Company | Contact / Role | Action | Context | Priority |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | ⬜ |  |  |  |  | P2 |
 
-## 三、一个月内（截止 15–30 天）
+## 3. Within a month (due 15–30 days)
 
-| 截止 | 状态 | 公司 | 对接人 / 职务 | 要做的动作 | 背景 | 优先级 |
+| Due | Status | Company | Contact / Role | Action | Context | Priority |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | ⬜ |  |  |  |  | P3 |
 
 ---
 
-## 四、现场见到了 · 但没有明确下一步（需我方先出牌）
+## 4. Met on site · but no clear next step (our move)
 
-| 公司 / 对接人 | 聊到的点 | 卡在哪 | 我方下一步建议 |
+| Company / Contact | What came up | Where it's stuck | Suggested next move |
 |---|---|---|---|
 |  |  |  |  |
 
-## 五、未见到 · 需补联系（不要算作有效商机）
+## 5. Not met · need to reach out (do NOT count as active pipeline)
 
-| 公司 / 对接人 | 为什么没见到 | 补联系方式 | 是否值得追 |
+| Company / Contact | Why we missed | How to reach them | Worth chasing? |
 |---|---|---|---|
-|  | 邀请过期未接受 / 临时约见未回 / 现场没找到展位 | LinkedIn / 邮件 / WhatsApp | 是 · 否 |
+|  | Invite expired / last-minute request unanswered / couldn't find their booth | LinkedIn / email / WhatsApp | Yes · No |
 
 ---
 
-## 六、待核实（问用户，不自己猜）
+## 6. Needs verification (ask the user — don't guess)
 
-- [ ] 
+- [ ]
 
-## 七、本次达标情况
+## 7. Targets vs. actual
 
-| 目标 | 目标值 | 实际 | 差在哪 |
+| Target | Goal | Actual | Gap |
 |---|---|---|---|
-| 有效交流家数 |  |  |  |
-| 合格商机线索 |  |  |  |
-| 重点客户正式会面 |  |  |  |
-| 接触代理商 / KA |  |  |  |
+| Meaningful conversations |  |  |  |
+| Qualified leads |  |  |  |
+| Formal meetings with key accounts |  |  |  |
+| Distributors / key accounts engaged |  |  |  |
 
 ---
 
-## 附：可单独转发的待办文案
+## Appendix: copy-pasteable action lines
 
-> 每条一行，可直接复制进 WhatsApp / 邮件 / 飞书任务
+> One per line, ready to drop into WhatsApp / email / your task tool
 
-1. 
+1.

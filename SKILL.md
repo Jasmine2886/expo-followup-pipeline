@@ -1,134 +1,134 @@
 ---
 name: expo-followup-pipeline
-version: 1.0.0
+version: 2.0.0
 agent_created: true
-description: 展会 / 差旅归来后的线索回收与跟进落地——多源素材回收（展会 App 聊天记录、AI 语音纪要、邮箱、日历、台账）→ 结构化成跟进待办表 → 落地到飞书任务 + 日历提醒 + 台账回填。当用户说「出差回来了整理一下跟进」「把展会上聊的整理成待办」「展会复盘」「follow-up table」「会后 Action Points」「把会议纪要做成任务」时使用。触发词：展会复盘、出差归来、跟进表、跟进待办、Action Points、线索回收、会议纪要整理。English: Post-event / post-trip lead recovery and follow-up pipeline — collect from multiple sources (event app chats, AI voice notes, email, calendar, deal ledger) → structure into a follow-up action table → land into Lark tasks + calendar reminders + ledger write-back. Use when the user says "just got back from a trip, organize the follow-ups", "turn what I discussed at the expo into todos", "expo debrief", "follow-up table", "post-meeting action points", "turn meeting notes into tasks". Triggers: expo debrief, trade show recap, business trip return, follow-up table, follow-up todos, action points, lead recovery, meeting notes to tasks.
+description: "Turn a conference, trade show, or business trip into a tracked follow-up pipeline. Collects scattered lead evidence from five sources (trip calendar, AI voice transcripts, event app messages, email, CRM/ledger) → reconciles what actually happened against what was planned → structures it into a prioritized follow-up table → lands it into real tasks + calendar reminders + CRM write-back. Use when the user says: 'just got back from a trip, organize the follow-ups', 'turn what I discussed at the expo into todos', 'expo debrief', 'conference recap', 'follow-up table', 'post-meeting action points', 'turn meeting notes into tasks', 'who should I chase this week'. Also triggers on: 展会复盘、出差归来、跟进表、跟进待办、Action Points、线索回收、会议纪要整理. NOT for: pre-event outreach scheduling, or drafting a single email."
 ---
 
-# 展会 / 差旅归来 · 线索回收与跟进落地
+# Post-Event Lead Recovery & Follow-Up Pipeline
 
-把一个"聊完就散"的展会/差旅，收敛成**一张能自己盯的跟进表 + 飞书里真的会提醒你的任务与日程**。
+Turn a trip that "ended in conversation" into **one follow-up table you can actually work from, plus tasks and reminders that will genuinely ping you**.
 
-适用：参加展会/行业会议后 1–7 天内做复盘；差旅中因条件限制（电脑关、网络差）只能用手机语音记录的场景。
-不适用：展前邀约排期（那是另一条流程）、单封邮件的撰写与发送。
+**Use for:** debriefing 1–7 days after a conference, trade show, or multi-meeting business trip. Especially when travel conditions (laptop closed, bad network) meant you could only capture voice notes on your phone.
+**Not for:** pre-event outreach scheduling (different workflow), or writing a single email.
 
 ---
 
-## 0. 运行前必填变量（迁移到新平台时**只改这一张表**）
+## 0. Required variables — the ONLY thing you change when porting
 
-本 skill 不含任何本机绝对路径。所有环境相关的值都收在这里，正文一律用 `<占位符>` 引用。
+This skill contains **no machine-specific absolute paths**. Everything environment-dependent is collected here; the body references it as `<PLACEHOLDER>`.
 
-| 变量 | 含义 | 怎么填 |
+| Variable | Meaning | How to fill |
 | --- | --- | --- |
-| `WORKSPACE_ROOT` | 工作区根目录（一切相对路径的起点） | 当前工作区根，如 `./` |
-| `OUTPUT_DIR` | 产出目录 | `<WORKSPACE_ROOT>/output/<项目名>/` |
-| `MEMORY_DIR` | 工作日志目录 | `<WORKSPACE_ROOT>/.workbuddy/memory/`（无该目录则先建） |
-| `LEDGER_DOC` | 作战台账文档标识（飞书 doc token / 其他平台文档 ID） | 由用户给出；台账需含「行程表」「Pipeline 表」两张表，Pipeline 表带「现场跟进情况」「会后 Action Points」两栏 |
-| `CALENDAR_ID` | 目标日历标识 | 默认 `primary`（写**个人默认日历**，绝不新建专用日历） |
-| `MAIL_USER` | 邮箱账号（用于展会 App 登录取验证码、搜会议邮件） | 用户工作邮箱 |
-| `EVENT_APP_URL` | 展会 App 入口 | `https://app.<展会域名>/event/<slug>` |
-| `VOICE_APP_URL` / `VOICE_SESSION_TITLE` | 语音纪要平台 + 目标会话标题 | 如 `https://chat.deepseek.com` / 「准备整理会议纪要」 |
-| `TZ_BASE` | 基准时区（所有输出时间按它） | 默认 `Asia/Shanghai` |
-| `TZ_LOCAL` | 展会/出差当地时区 | 如迪拜 `UTC+04` = 基准 −4h |
-| `TODOOL` | 任务与日历落地工具 | 本机为 `lark-cli`（`task` / `calendar` 域）；迁移时替换成目标平台对应能力 |
+| `WORKSPACE_ROOT` | Workspace root (base for all relative paths) | e.g. `./` |
+| `OUTPUT_DIR` | Output directory | `<WORKSPACE_ROOT>/output/<project>/` |
+| `MEMORY_DIR` | Work-log directory | `<WORKSPACE_ROOT>/.workbuddy/memory/` (create if missing) |
+| `LEDGER_DOC` | Your deal ledger / CRM / spreadsheet identifier | Any system: a doc ID, a Notion database, a Google Sheet, an Airtable base. Must expose two fields per contact: *on-site notes* and *post-meeting action points* |
+| `CALENDAR_ID` | Target calendar | Default `primary` — write to the **personal default calendar**, never create a dedicated one |
+| `MAIL_USER` | Email account | Used for event-app login codes and searching meeting mail |
+| `EVENT_APP_URL` | Event app entry point | e.g. `https://app.<event-domain>/event/<slug>` |
+| `VOICE_APP_URL` / `VOICE_SESSION_TITLE` | Transcription service + target session | Any AI notetaker or chat-with-transcripts service |
+| `TZ_BASE` | Base timezone for all output | **Your home timezone** — set it explicitly, don't assume |
+| `TZ_LOCAL` | Timezone where the event happened | e.g. Dubai `UTC+04` = base −4h |
+| `TODOOL` | Task + calendar delivery tool | Whatever your stack uses — see §4/§5 for the capability contract |
 
-> 迁移提示：正文里的命令写法是**能力描述 + 本机实现**。换平台时，保留步骤与判定逻辑，把 `TODOOL` 那一行替换成新平台的命令即可；不要为了兼容某台机器而写死路径。
+> **Porting note:** the body below describes *capabilities* plus a reference implementation. When moving to a new platform, keep the steps and decision logic, and swap the `TODOOL` commands for your platform's equivalents. Never hardcode a path to make one machine work.
 
 ---
 
-## 1. 六步主流程
+## 1. The six steps
 
-### Step 1 · 素材回收（五个源，按这个优先级）
+### Step 1 · Collect (five sources, in this priority order)
 
-| 优先级 | 源 | 拿到什么 | 关键动作 |
+| Priority | Source | What it gives you | Key move |
 | --- | --- | --- | --- |
-| ★★★ | **出差期间日历**（含用户现场手动补记的事件） | **真实发生了哪些会面**——往往比展前排期更接近事实 | 拉整段出差日期的日程全量，按时间排序；用户手动建的短标题事件（"Nsano meeting""XX 罗总"）就是实际见面清单 |
-| ★★★ | **AI 语音纪要**（手机录音/转写） | 会上到底聊了什么、答应了什么 | 见 §2 登录与读取；失败则走「用户直接粘贴原文」保底 |
-| ★★ | **展会 App Messages** | 线上沟通过什么、有没有爽约/改期 | 见 §3；产出「App 内沟通留痕」 |
-| ★★ | **邮箱** | 确认/取消通知、对方主动 follow-up | 搜展会名 + 关键联系人姓氏 |
-| ★ | **台账（LEDGER_DOC）** | 展前的意图与优先级（P1/P2/P3），用来对齐口径 | 读 Pipeline 表两栏是否为空——空说明现场没回填，正好是本次要补的 |
+| ★★★ | **Calendar covering the trip** (incl. events you typed in on site) | **Which meetings actually happened** — usually closer to truth than any pre-trip schedule | Pull the full date range, sort by time. Short manually-created titles ("Nsano meeting", "dinner w/ X") *are* your real meeting list |
+| ★★★ | **AI voice transcripts** (phone recordings / notetaker) | What was actually said and promised | See §2. If login fails, fall back to "user pastes the raw text" |
+| ★★ | **Event app messages** | What was discussed online, any no-shows or reschedules | See §3. Produces the "in-app conversation log" |
+| ★★ | **Email** | Confirmations, cancellations, inbound follow-ups | Search event name + key contact surnames |
+| ★ | **Ledger / CRM** (`LEDGER_DOC`) | Pre-event intent and priority (P1/P2/P3) for alignment | Check whether the two fields are empty — empty means on-site never got filled in, which is exactly what this run fixes |
 
-**先动手后提问**：五个源先自己扫一遍，把"实际见过谁"拼出来，再拿不确定的点问用户（通常只剩 1–2 个，比如"Bitpace 和 OpenPayd 都写 B50，是同一个展位吗"）。
+**Act first, ask later.** Sweep all five sources yourself and assemble "who did I actually meet". *Then* ask about the 1–2 things still ambiguous (e.g. "Bitpace and OpenPayd both list booth B50 — same booth or a data error?").
 
-### Step 2 · 结构化：每人一张卡
+### Step 2 · Structure: one card per contact
 
-对每个联系人产出固定字段，缺的写「待补」不要编：
-
-```
-公司 / 姓名 / 职务 / 联系方式
-聊了什么（对方诉求 + 我方给了什么）
-下一步动作（动词开头，一件事一条）
-截止时间（有约定写约定，没约定按优先级给建议：P1=7天内，P2=14天，P3=30天）
-优先级 P1/P2/P3（沿用台账既有分级，不要另起一套）
-状态：已见面·待推进 / 已见面·等对方 / 未见到·需补联系 / 已过期·放弃
-```
-
-**状态分类是这张表的价值所在**：`未见到·需补联系`（如过期未接受的邀请、对方临时约见没回）必须**单独成段**，不能混进有效商机里自欺欺人。
-
-### Step 3 · 产出跟进待办表（本地 Markdown）
-
-落到 `<OUTPUT_DIR>/跟进表-<展会名>-<日期>.md`，模板见 `assets/followup-table-template.md`。
-
-要求：
-- 一眼能看出"今天该催谁"——表头按**截止时间**排序，不是按公司名
-- 每条待办可单独复制转发（动词开头 + 明确落点，不写"保持联系"这种废话）
-- 附「未见到名单」和「本次达标情况」两节
-
-### Step 4 · 落地飞书任务
+Fixed fields per contact. Write `TBD` for anything missing — never invent:
 
 ```
-# 一次建清单 + 批量建任务（推荐，任务天然归组）
-<飞书CLI> task +tasklist-create --name "<展会名> 会后跟进" --data '<JSON 数组>'
-
-# 或逐个建
-<飞书CLI> task +create --summary "<动词开头的一句话>" --description "<背景+动作+口径>" --due "YYYY-MM-DD"
+Company / Name / Role / Contact
+What we discussed (their ask + what we offered)
+Next action (verb-first, one action per line)
+Due date (use the agreed date; if none, suggest by priority: P1=7d, P2=14d, P3=30d)
+Priority P1/P2/P3 (reuse the ledger's existing tiers — don't invent a new scheme)
+Status: Met·to advance / Met·waiting on them / Not met·need to reach out / Expired·drop
 ```
 
-- 标题写**动作**，不写公司名（"发 Onlypay 收单方案给 Leonardo"，不是"Checkout.com"）
-- `--due` 用 Step 2 定的截止时间；没约定的按优先级给建议日期并注明「建议」
-- 建完用 `task +get-my-tasks` 复核，别只看返回 ok
+**The status field is where the value is.** `Not met·need to reach out` (expired invitations, unanswered last-minute requests) must sit in **its own section** — folding it into the active pipeline is self-deception.
 
-### Step 5 · 落地日历提醒（不是会议）
+### Step 3 · Emit the follow-up table (local Markdown)
+
+Write to `<OUTPUT_DIR>/followup-<event>-<date>.md`. Template: `assets/followup-table-template.md`.
+
+Requirements:
+- You can see "who to chase today" at a glance — sort by **due date**, not company name
+- Every line is individually copy-pasteable (verb-first + concrete deliverable; no "stay in touch" filler)
+- Always include a **"not met" list** and a **"targets vs. actual"** section
+
+### Step 4 · Land tasks
 
 ```
-<飞书CLI> calendar +create --summary "🔔 跟进：<公司> · <动作>" --start "..." --end "..." --description @<文件>
+# Preferred: create one list + batch-create into it (tasks stay grouped)
+<TASK_CLI> tasklist-create --name "<Event> follow-up" --data '<JSON array>'
+
+# Or one at a time
+<TASK_CLI> task-create --summary "<verb-first sentence>" --description "<context + action + figures>" --due "YYYY-MM-DD"
 ```
 
-- 提醒事件**零参会人**（这是红线，绝不邀请任何人，包括对方）
-- 只写用户自己的默认日历
-- 批量建完**必须**用 `calendar +agenda` 复核一遍
+- Title the **action**, not the company ("Send Onlypay acquiring proposal to Leonardo", not "Checkout.com")
+- `--due` comes from Step 2; where no date was agreed, use the priority-based suggestion and mark it `suggested`
+- After creating, **re-read** the task list to verify — don't trust an `ok` response
 
-### Step 6 · 回填台账 + 收尾
+### Step 5 · Land calendar reminders (not meetings)
 
-- 用 `docs +update str_replace` 把「现场跟进情况」「会后 Action Points」两栏填满，**优先 str_replace，别用整块 block_replace**
-- 回填后回读校验（全文搜关键词，确认只改到目标处）
-- 写工作日志到 `<MEMORY_DIR>/YYYY-MM-DD.md`：本次做了什么、哪些确认了、哪些还悬着
+```
+<CAL_CLI> calendar-create --summary "🔔 Follow up: <Company> · <action>" --start "..." --end "..." --description @<file>
+```
+
+- Reminder events have **zero attendees** — hard rule, never invite anyone, including the counterparty
+- Write only to the user's own default calendar
+- After batch creation, **always** verify with an agenda read-back
+
+### Step 6 · Write back to the ledger + wrap up
+
+- Fill the *on-site notes* and *post-meeting action points* fields using a **targeted string replace, never a whole-block replace**
+- After writing, read back and confirm you only changed the intended cells
+- Append a work log to `<MEMORY_DIR>/YYYY-MM-DD.md`: what ran, what got confirmed, what's still open
 
 ---
 
-## 2. 语音纪要平台：登录与读取（本流程最容易卡住的一步）
+## 2. Transcription service: login and read (the step most likely to stall)
 
-顺序，别跳：
+Follow the order, don't skip:
 
-1. 打开 `VOICE_APP_URL`，先判断是否已登录（URL 是否停在登录页）
-2. **不要用第三方一键登录**（微信/Apple 快捷登录可能绑到**非本人账号**——本次就是它绑到了别人的号，白等 40 分钟）。优先手机号验证码或账号密码
-3. 手机号登录后通常弹出**图形点选验证码**（"点击图中最小的蓝色三角锥"之类）：截图 → 判读 → 点坐标 → 提交；判错会换图，最多试 3 轮
-4. 取验证码：让用户提供手机号 → 点发送 → 把收到的 6 位码填回
-5. 登录后按 `VOICE_SESSION_TITLE` 找到会话，读全文
+1. Open `VOICE_APP_URL`, check whether you're already logged in (does the URL sit on a login page?)
+2. **Avoid third-party one-tap SSO** — it can bind to **a different account than yours** (this cost one run 40 minutes). Prefer phone-code or username/password
+3. Phone login usually raises an **image-selection captcha** ("click the smallest blue cone"): screenshot → interpret → compute coordinates → submit. Wrong answers rotate the image; cap at 3 attempts
+4. Getting the code: ask the user for their phone number → trigger send → enter the 6-digit code
+5. Once in, locate the session by `VOICE_SESSION_TITLE` and read it in full
 
-**三条铁律**：
-- 自动化浏览器是**独立档案**，用户在自己 Chrome 里登录 ≠ 这边登录了。必须在本 skill 的浏览器会话内完成登录
-- 沙箱内通常**无法截屏**（无屏幕录制权限），无法确认窗口是否可见 → 直接问用户"能看到窗口吗"，别自己猜
-- **保底路径永远优先于死磕登录**：让用户把原文粘贴进来，照样能推进。登录尝试超过 3 轮还没成，就切保底
+**Three hard rules:**
+- The automation browser uses an **isolated profile** — the user being logged into their own Chrome means nothing here. Login must happen inside this session
+- Sandboxes often **cannot screenshot** (no screen recording permission), so you can't confirm the window is visible → **ask the user directly**, don't guess
+- **The fallback always beats grinding on login.** Let the user paste the raw transcript and the run continues. After 3 failed login attempts, switch
 
 ---
 
-## 3. 展会 App（Swapcard 系）聊天记录抓取
+## 3. Event app message scraping (Swapcard-style platforms)
 
-1. 打开 `EVENT_APP_URL` → **Client Challenge 图形验证码**（无头模式也拦）：截图 → 读码 → 填 → 提交
-2. Cookie 弹窗 Accept all → Log in → **邮箱一次性验证码登录**（从 `MAIL_USER` 邮箱取 6 位码）
-3. 不要用"提取浏览器 Cookie"的路线（钥匙串读取常被系统拒绝，浪费时间）
-4. 进 Messages 后，一次性拿到全部会话直链，比逐个点列表稳（点击后元素引用会重排）：
+1. Open `EVENT_APP_URL` → a **Client Challenge image captcha** (blocks headless too): screenshot → read → fill → submit
+2. Accept the cookie banner → Log in → **one-time email code** from `MAIL_USER`
+3. Don't try to extract browser cookies directly (keychain reads are usually denied — wasted time)
+4. Once in Messages, grab all conversation permalinks in one pass — more reliable than clicking through a list (element refs shift on interaction):
 
 ```js
 JSON.stringify(Array.from(document.querySelectorAll('a[href]'))
@@ -136,49 +136,49 @@ JSON.stringify(Array.from(document.querySelectorAll('a[href]'))
   .map(a => [a.textContent.trim().slice(0,25), a.getAttribute('href')]))
 ```
 
-5. 逐个打开会话直链取正文：`document.querySelector('main').innerText`
-   - 正文前段是会话列表，**从第一个「月份 D, YYYY」行开始才是聊天内容**，到 `Scroll to bottom` 结束
-6. 时间戳按**浏览器本地时区**渲染 → 统一换算到 `TZ_BASE` 并在产出里注明
-7. 把聊天原文 + 中文小结写进**对应日历事件的备注**（`calendar +update --description @文件`），章节标题建议「💬 App 内沟通留痕」
-8. 没有日历事件的会话（新线索）单独列出，别丢
+5. Open each permalink and read the body: `document.querySelector('main').innerText`
+   - The leading block is the conversation list; **content starts at the first "Month D, YYYY" line** and ends at `Scroll to bottom`
+6. Timestamps render in the **browser's local timezone** → convert to `TZ_BASE` and note the conversion in the output
+7. Append the raw chat + a summary into the **notes field of the matching calendar event** (`calendar-update --description @file`), under a heading like "💬 In-app conversation log"
+8. Conversations with no matching calendar event are new leads — list them separately, don't drop them
 
 ---
 
-## 4. 质量红线
+## 4. Quality red lines
 
-1. **口径要分清**：客户自报的数字（"我们年处理 2400 亿"）≠ 已核实事实。产出里标注来源
-2. **不替用户做外部动作**：邮件不自动发、日程不加参会人、共享文档改动先确认
-3. **时间必须带时区**：产出统一 `TZ_BASE`，涉及当地的注明换算（如"迪拜 = 北京 −4h"）
-4. **不编造**：语音转写有错字、信息不全的地方标「待补」，不要脑补成完整纪要
-5. **过期的就是过期的**：未接受的邀请、超时未回的消息，归入「未见到·需补联系」，不要算作有效商机
-
----
-
-## 5. 坑位速查
-
-详见 `references/pitfalls.md`（浏览器/验证码/坐标/时区）与 `references/source-collection.md`（各源抓取细节）。高频几条：
-
-- 日历批量创建后**必须复核**：`+create` 带不支持的参数会整条静默失败，返回还像成功
-- `calendar +create` **不支持**通知参数，那是 `+update` 的
-- 删除事件必须带确认参数，否则返回 ok 但没删
-- 文档整块替换会导致块 ID 变化 → 复用旧 ID 必失败，纯文字改动用 `str_replace`
-- 浏览器坐标：截图尺寸 = 视口 CSS 像素（dpr=1）时与 `getBoundingClientRect()` **1:1**；先确认再点，别凭缩放后的视觉估计点
-- 命令输出不要 `| head` 截断后判断成功——落盘再解析
+1. **Separate claimed from verified.** A contact's self-reported figures ("we process $240B a year") are not established fact. Label the source in your output
+2. **Never take external actions for the user.** Don't send mail automatically, don't add attendees to events, confirm before touching shared documents
+3. **Always carry a timezone.** Output in `TZ_BASE`; where local time matters, state the conversion (e.g. "Dubai = home −4h")
+4. **Don't fabricate.** Transcripts have errors and gaps — mark them `TBD` rather than writing a polished fiction
+5. **Expired means expired.** Unaccepted invites and messages that went unanswered belong in `Not met·need to reach out`, not in the active pipeline
 
 ---
 
-## 6. 产出清单
+## 5. Gotcha quick-reference
 
-每次跑完应交付：
+Full detail in `references/pitfalls.md` (browser / captcha / coordinates / timezone) and `references/source-collection.md` (per-source scraping). The ones that bite most often:
 
-1. `<OUTPUT_DIR>/跟进表-<展会名>-<日期>.md`（自用主表）
-2. 飞书任务清单（一组待办，带截止时间）
-3. 日历提醒事件（关键客户的推进节点）
-4. 台账两栏回填 + 复核通过
-5. 工作日志一条
+- After batch-creating calendar events, **always verify** — unsupported params can fail the whole call while still returning something that looks like success
+- Notification/reminder params usually belong to **update**, not **create**
+- Deleting events typically requires an explicit confirm flag; without it the call returns ok and deletes nothing
+- Whole-block document replacement changes block IDs → reusing an old ID always fails. Use targeted string replace for text edits
+- Browser coordinates: when screenshot size equals viewport CSS pixels (dpr=1), it's **1:1** with `getBoundingClientRect()`. Confirm before clicking; don't click based on how the scaled-down preview looks
+- Never judge success from `| head`-truncated output — write to disk, then parse
 
-## 附：参考文件
+---
 
-- `references/source-collection.md` — 五个素材源的抓取细节与判断逻辑
-- `references/pitfalls.md` — 浏览器、登录、验证码、坐标、时区的坑与解法
-- `assets/followup-table-template.md` — 跟进表模板（可直接套用）
+## 6. Deliverables
+
+Every run should produce:
+
+1. `<OUTPUT_DIR>/followup-<event>-<date>.md` (the main working table)
+2. A task list (grouped, with due dates)
+3. Calendar reminder events (milestones for key accounts)
+4. The two ledger fields filled + verified
+5. One work-log entry
+
+## Bundled files
+
+- `references/source-collection.md` — per-source scraping detail and merge rules
+- `references/pitfalls.md` — browser, login, captcha, coordinate, and timezone traps
+- `assets/followup-table-template.md` — copy-paste follow-up table template

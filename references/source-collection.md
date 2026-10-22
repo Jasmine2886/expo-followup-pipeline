@@ -1,49 +1,49 @@
-# 素材回收 · 五个源的抓取细节
+# Source collection — scraping detail for the five sources
 
-## 源 1：出差期间日历（最高优先级）
+## Source 1: Calendar covering the trip (highest priority)
 
-为什么排第一：展前排期里"确认"的未必发生，"没排"的反而见了。用户在现场用手机补记的短标题事件（"Nsano meeting""XX 罗总""XX 晚宴"）才是真实会面清单。
+Why it ranks first: meetings marked "confirmed" in the pre-trip plan often never happen, and unplanned ones do. Short events the user typed into their phone on site ("Nsano meeting", "dinner w/ X") *are* the real meeting list.
 
-做法：
+How:
 ```
-<飞书CLI> calendar +agenda --start <出差起始日> --end <返程日+1>
+<CAL_CLI> agenda --start <trip start date> --end <return date + 1>
 ```
-- 拿到后按开始时间排序，打印 `时间 | 标题 | event_id`
-- 把**用户手动建的短标题事件**标为"实际发生"，把**我/系统预排的**标为"计划"
-- 两者对不上的地方（计划有、实际无 → 爽约；计划无、实际有 → 临时会面）就是要写进跟进表的东西
+- Pull it, sort by start time, print `time | title | event_id`
+- Mark **manually created short-title events** as "actually happened"; mark **pre-planned ones** as "planned"
+- Where the two diverge — planned but no actual (no-show), or actual but no plan (walk-up meeting) — that divergence is exactly what belongs in the follow-up table
 
-## 源 2：AI 语音纪要
+## Source 2: AI voice transcripts
 
-- 平台：`VOICE_APP_URL`，目标会话 `VOICE_SESSION_TITLE`
-- 常见形态：一段"准备整理会议纪要"的会话，里面是多条语音转写，时间顺序可能乱、有错别字
-- 处理：不要要求用户整理格式，原始转写直接吃；按"公司/人名"切片归到 Step 2 的卡片里
-- 明确告诉用户：能顺带说明"覆盖哪几天/哪些场合""有没有说好下一步""有没有当时没说清的"，落地会准很多
-- 登录细节见主 SKILL.md §2；**超过 3 轮登录未成 → 切保底：让用户粘贴原文**
+- Lives at `VOICE_APP_URL`, target session `VOICE_SESSION_TITLE`
+- Typical shape: one session titled something like "notes to organize", containing multiple transcript segments, possibly out of order, with transcription errors
+- Handling: don't ask the user to clean it up — ingest the raw transcript. Slice it by company/person name into the Step 2 cards
+- Tell the user explicitly: knowing "which days/occasions this covers", "whether a next step was agreed", and "what was left unclear at the time" makes the output dramatically more accurate
+- Login mechanics: SKILL.md §2. **More than 3 failed login rounds → fall back to having the user paste the raw text**
 
-## 源 3：展会 App（Swapcard 系）Messages
+## Source 3: Event app messages (Swapcard-style)
 
-- 入口 `EVENT_APP_URL`，登录用邮箱一次性验证码
-- 会话直链一次性抓取（见主 SKILL.md §3 的 JS 片段）
-- 正文解析：从第一个「月份 D, YYYY」行开始，到 `Scroll to bottom` 结束
-- 时间戳按浏览器本地时区渲染 → 换算到 `TZ_BASE`
-- 交叉验证技巧：某条消息的时间 + 内容（如"我找不到你的展位 18:49 北京 ≈ 14:49 当地，正好在原定 14:00 约见之后"）能反推时区基准是否正确
-- 产出：
-  - 有对应日历事件的 → 聊天原文 + 中文小结追加进事件备注
-  - 没有日历事件的 → 新线索，单独列（这类常常是漏掉的高价值对象）
+- Entry point `EVENT_APP_URL`; login via one-time email code
+- Grab all conversation permalinks in one pass (JS snippet in SKILL.md §3)
+- Body parsing: content begins at the first `Month D, YYYY` line and ends at `Scroll to bottom`
+- Timestamps render in the browser's local timezone → convert to `TZ_BASE`
+- Cross-check trick: a message's time plus its content (e.g. "I can't find your booth, 18:49 home ≈ 14:49 local, right after our scheduled 14:00") can confirm whether your timezone base is correct
+- Output:
+  - Has a matching calendar event → append raw chat + summary into that event's notes
+  - No matching event → it's a new lead, list it separately (these are frequently the high-value ones everyone forgets)
 
-## 源 4：邮箱
+## Source 4: Email
 
-- 搜展会名、主办方名、关键联系人姓氏
-- 重点看三类：确认信 / 取消通知 / 对方主动 follow-up
-- 取消通知对应的日历事件要删掉（注意确认参数），避免日历里留"假会议"
+- Search the event name, the organizer name, and key contact surnames
+- Focus on three types: confirmations / cancellations / inbound follow-ups from the other side
+- Calendar events corresponding to a cancellation should be deleted (mind the confirm flag) so the calendar isn't left holding phantom meetings
 
-## 源 5：台账（LEDGER_DOC）
+## Source 5: Ledger / CRM (`LEDGER_DOC`)
 
-- 看 Pipeline 表的「现场跟进情况」「会后 Action Points」是否为空 → 空说明现场没回填，正是本次目标
-- 沿用表里既有的 P1/P2/P3 分级和客户标签（潜客 / 在谈客户 / 渠道 / 现有客户），**不要另起一套分类**
-- 回填时用 `str_replace` 精确替换单元格文字，改完回读校验
+- Check whether the *on-site notes* and *post-meeting action points* fields are empty → empty means on-site never filled them in, which is precisely this run's target
+- Reuse the existing P1/P2/P3 tiers and contact tags (prospect / in negotiation / channel partner / existing customer) — **don't invent a parallel taxonomy**
+- When writing back, use a targeted string replace on the cell text, then read back to verify
 
-## 合并判定规则
+## Merge rules
 
-同一家公司出现多个人（如 Paymentology 的区域总监 + 全球合作负责人）→ **合并成一张卡**，注明两条线各自进度，避免重复跟进闹乌龙。
-同一展位号被两家公司声称（如两家都写 B50）→ 列入"待核实"，问用户，不要自己猜。
+Multiple people at one company (e.g. a regional director and a global partnerships lead at the same firm) → **merge into one card**, noting each thread's progress separately, so nobody double-contacts them.
+Two companies claiming the same booth number (e.g. both listing B50) → put it in "needs verification" and ask the user. Don't guess.
